@@ -39,16 +39,7 @@ func (r *AdminRepositoryImpl) GetAll() ([]*model.Admin, error) {
 	for rows.Next() {
 		var admin model.Admin
 		err := rows.Scan(
-			&admin.ID,
-			&admin.UserID,
-			&admin.OrganizationID,
-			&admin.Role,
-			&admin.Permission,
-			&admin.Status,
-			&admin.LastLogin,
-			&admin.CreatedAt,
-			&admin.UpdatedAt,
-			&admin.DeletedAt,
+			
 		)
 		if err != nil {
 			log.Printf("Error scanning admin row: %v", err)
