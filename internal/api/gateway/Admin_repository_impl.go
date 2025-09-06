@@ -64,16 +64,7 @@ func (r *AdminRepositoryImpl) GetByID(AdminID uuid.UUID) (*model.Admin, error) {
 
 	row := r.db.QueryRow(`SELECT * FROM get_admin_by_id($1)`, AdminID)
 	err := row.Scan(
-		&admin.ID,
-		&admin.UserID,
-		&admin.OrganizationID,
-		&admin.Role,
-		&admin.Permission,
-		&admin.Status,
-		&admin.LastLogin,
-		&admin.CreatedAt,
-		&admin.UpdatedAt,
-		&admin.DeletedAt,
+		
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -91,7 +82,7 @@ func (r *AdminRepositoryImpl) GetByID(AdminID uuid.UUID) (*model.Admin, error) {
 // Create inserts a new admin using the stored procedure
 func (r AdminRepositoryImpl) Create(admin *model.Admin) error {
 	_, err := r.db.Exec(`CALL create_admin($1,$2, $3, $4, $5)`,
-		admin.UserID, admin.OrganizationID, admin.Role, admin.Permission, admin.Status,
+
 	)
 	if err != nil {
 		log.Printf("Error calling create_admin: %v", err)
@@ -106,7 +97,7 @@ func (r AdminRepositoryImpl) Create(admin *model.Admin) error {
 // Update modifies an existing admin using the stored procedure
 func (r AdminRepositoryImpl) Update(admin *model.Admin) error {
 	_, err := r.db.Exec(`call update admin($1, $2, $3, $4, $5, $6)`,
-		admin.ID, admin.OrganizationID, admin.Role, admin.Permission, admin.Status, admin.LastLogin)
+)
 	if err != nil {
 		log.Printf("Error calling update_admin: %v", err)
 		return err

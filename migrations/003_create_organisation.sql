@@ -1,525 +1,93 @@
--- =====================================================
--- ORGANIZATION ADMINS CRUD
--- =====================================================
+-- Enable extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Create Admin
-CREATE OR REPLACE PROCEDURE create_organization_admin(
-    IN p_user_id UUID,
-    IN p_organization_id UUID,
-    IN p_role VARCHAR
-)
-LANGUAGE plpgsql AS $$
+--- ENUM ORGANIZATION
+CREATE TYPE organization_status AS ENUM ('pending', 'approved', 'suspended');
+
+ALTER TABLE organizations
+    ALTER COLUMN status TYPE organization_status USING status::organization_status,
+    ALTER COLUMN status SET DEFAULT 'pending';
+
+
+-- organization table
+
+CREATE TABLE IF NOT EXISTS organizations {
+    id UUID   PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name    VARCHAR(255) NOT NULL,
+    description TEXT,
+    owner_id  UUID NOT NULL,
+    tutors UUID[] DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    
+}
+
+
+-- Create Organization
+
+CREATE OR REPLACE FUNCTION create_organization(
+    p_name VARCHAR,
+    p_description TEXT,
+    p_owner_id UUID
+) RETURNS UUID AS $$
+DECLARE
+    new_id UUID := uuid_generate_v4();
 BEGIN
-    INSERT INTO organization_admins (user_id, organization_id, role)
-    VALUES (p_user_id, p_organization_id, p_role);
-END;
-$$;
+    INSERT INTO organizations (id, name, description, owner_id, created_at, updated_at)
+    VALUES (new_id, p_name, p_description, p_owner_id, NOW(), NOW());
 
--- Update Admin
-CREATE OR REPLACE PROCEDURE update_organization_admin(
-    IN p_id UUID,
-    IN p_role VARCHAR
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_admins
-    SET role = p_role
-    WHERE id = p_id AND deleted_at IS NULL;
+    RETURN new_id;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
--- Soft Delete Admin
-CREATE OR REPLACE PROCEDURE delete_organization_admin(IN p_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_admins
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE id = p_id;
-END;
-$$;
 
--- Get All Admins for an Organization
-CREATE OR REPLACE FUNCTION get_admins_by_organization(p_org_id UUID)
-RETURNS TABLE (
+-- Get Organization by ID
+
+CREATE OR REPLACE FUNCTION get_organization_by_id(
+    p_id UUID
+) RETURNS TABLE (
     id UUID,
-    user_id UUID,
-    organization_id UUID,
-    role VARCHAR,
-    created_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, user_id, organization_id, role, created_at
-    FROM organization_admins
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
-
-
--- =====================================================
--- ORGANIZATION TUTORS CRUD
--- =====================================================
-
--- Create Tutor
-CREATE OR REPLACE PROCEDURE create_organization_tutor(
-    IN p_user_id UUID,
-    IN p_organization_id UUID,
-    IN p_approved BOOLEAN
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_tutors (user_id, organization_id, approved)
-    VALUES (p_user_id, p_organization_id, p_approved);
-END;
-$$;
-
--- Update Tutor (approval status)
-CREATE OR REPLACE PROCEDURE update_organization_tutor(
-    IN p_id UUID,
-    IN p_approved BOOLEAN
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_tutors
-    SET approved = p_approved
-    WHERE id = p_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Tutor
-CREATE OR REPLACE PROCEDURE delete_organization_tutor(IN p_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_tutors
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE id = p_id;
-END;
-$$;
-
--- Get All Tutors for an Organization
-CREATE OR REPLACE FUNCTION get_tutors_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    user_id UUID,
-    organization_id UUID,
-    approved BOOLEAN,
-    created_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, user_id, organization_id, approved, created_at
-    FROM organization_tutors
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
-
-
--- =====================================================
--- ORGANIZATION BRANDING CRUD
--- =====================================================
-
--- Create Branding
-CREATE OR REPLACE PROCEDURE create_organization_branding(
-    IN p_organization_id UUID,
-    IN p_logo_url VARCHAR,
-    IN p_primary_color VARCHAR,
-    IN p_secondary_color VARCHAR,
-    IN p_theme VARCHAR,
-    IN p_email_template TEXT
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_brandings (organization_id, logo_url, primary_color, secondary_color, theme, email_template)
-    VALUES (p_organization_id, p_logo_url, p_primary_color, p_secondary_color, p_theme, p_email_template);
-END;
-$$;
-
--- Update Branding
-CREATE OR REPLACE PROCEDURE update_organization_branding(
-    IN p_organization_id UUID,
-    IN p_logo_url VARCHAR,
-    IN p_primary_color VARCHAR,
-    IN p_secondary_color VARCHAR,
-    IN p_theme VARCHAR,
-    IN p_email_template TEXT
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_brandings
-    SET logo_url = p_logo_url,
-        primary_color = p_primary_color,
-        secondary_color = p_secondary_color,
-        theme = p_theme,
-        email_template = p_email_template,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Branding
-CREATE OR REPLACE PROCEDURE delete_organization_branding(IN p_organization_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_brandings
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id;
-END;
-$$;
-
--- Get Branding by Organization
-CREATE OR REPLACE FUNCTION get_branding_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    organization_id UUID,
-    logo_url VARCHAR,
-    primary_color VARCHAR,
-    secondary_color VARCHAR,
-    theme VARCHAR,
-    email_template TEXT,
+    name VARCHAR,
+    description TEXT,
+    owner_id UUID,
+    tutors UUID[],
     created_at TIMESTAMP,
     updated_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
+) AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, organization_id, logo_url, primary_color, secondary_color, theme, email_template, created_at, updated_at
-    FROM organization_brandings
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
+    SELECT o.id, o.name, o.description, o.owner_id, o.tutors, o.created_at, o.updated_at
+    FROM organizations o
+    WHERE o.id = p_id;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
+-- Update Organization
 
--- =====================================================
--- ORGANIZATION BILLING CRUD
--- =====================================================
-
--- Create Billing
-CREATE OR REPLACE PROCEDURE create_organization_billing(
-    IN p_organization_id UUID,
-    IN p_plan plan_type,
-    IN p_payment_method VARCHAR,
-    IN p_subscription_id VARCHAR,
-    IN p_next_billing_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION update_organization(
+    p_id UUID,
+    p_name VARCHAR,
+    p_description TEXT
+) RETURNS VOID AS $$
 BEGIN
-    INSERT INTO organization_billings (organization_id, plan, payment_method, subscription_id, next_billing_at)
-    VALUES (p_organization_id, p_plan, p_payment_method, p_subscription_id, p_next_billing_at);
-END;
-$$;
-
--- Update Billing
-CREATE OR REPLACE PROCEDURE update_organization_billing(
-    IN p_organization_id UUID,
-    IN p_plan plan_type,
-    IN p_payment_method VARCHAR,
-    IN p_subscription_id VARCHAR,
-    IN p_next_billing_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_billings
-    SET plan = p_plan,
-        payment_method = p_payment_method,
-        subscription_id = p_subscription_id,
-        next_billing_at = p_next_billing_at,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Billing
-CREATE OR REPLACE PROCEDURE delete_organization_billing(IN p_organization_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_billings
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id;
-END;
-$$;
-
--- Get Billing by Organization
-CREATE OR REPLACE FUNCTION get_billing_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    organization_id UUID,
-    plan VARCHAR,
-    payment_method VARCHAR,
-    subscription_id VARCHAR,
-    next_billing_at TIMESTAMP,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, organization_id, plan::text, payment_method, subscription_id, next_billing_at, created_at, updated_at
-    FROM organization_billings
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
-
--- =====================================================
--- ORGANIZATION ADMINS CRUD
--- =====================================================
-
--- Create Admin
-CREATE OR REPLACE PROCEDURE create_organization_admin(
-    IN p_user_id UUID,
-    IN p_organization_id UUID,
-    IN p_role VARCHAR
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_admins (user_id, organization_id, role)
-    VALUES (p_user_id, p_organization_id, p_role);
-END;
-$$;
-
--- Update Admin
-CREATE OR REPLACE PROCEDURE update_organization_admin(
-    IN p_id UUID,
-    IN p_role VARCHAR
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_admins
-    SET role = p_role
-    WHERE id = p_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Admin
-CREATE OR REPLACE PROCEDURE delete_organization_admin(IN p_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_admins
-    SET deleted_at = CURRENT_TIMESTAMP
+    UPDATE organizations
+    SET name = COALESCE(p_name, name),
+        description = COALESCE(p_description, description),
+        updated_at = NOW()
     WHERE id = p_id;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
--- Get All Admins for an Organization
-CREATE OR REPLACE FUNCTION get_admins_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    user_id UUID,
-    organization_id UUID,
-    role VARCHAR,
-    created_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
+
+-- Delete Organization
+
+CREATE OR REPLACE FUNCTION delete_organization(
+    p_id UUID
+) RETURNS VOID AS $$
 BEGIN
-    RETURN QUERY
-    SELECT id, user_id, organization_id, role, created_at
-    FROM organization_admins
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
+    DELETE FROM organizations WHERE id = p_id;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
 
--- =====================================================
--- ORGANIZATION TUTORS CRUD
--- =====================================================
-
--- Create Tutor
-CREATE OR REPLACE PROCEDURE create_organization_tutor(
-    IN p_user_id UUID,
-    IN p_organization_id UUID,
-    IN p_approved BOOLEAN
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_tutors (user_id, organization_id, approved)
-    VALUES (p_user_id, p_organization_id, p_approved);
-END;
-$$;
-
--- Update Tutor (approval status)
-CREATE OR REPLACE PROCEDURE update_organization_tutor(
-    IN p_id UUID,
-    IN p_approved BOOLEAN
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_tutors
-    SET approved = p_approved
-    WHERE id = p_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Tutor
-CREATE OR REPLACE PROCEDURE delete_organization_tutor(IN p_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_tutors
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE id = p_id;
-END;
-$$;
-
--- Get All Tutors for an Organization
-CREATE OR REPLACE FUNCTION get_tutors_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    user_id UUID,
-    organization_id UUID,
-    approved BOOLEAN,
-    created_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, user_id, organization_id, approved, created_at
-    FROM organization_tutors
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
-
-
--- =====================================================
--- ORGANIZATION BRANDING CRUD
--- =====================================================
-
--- Create Branding
-CREATE OR REPLACE PROCEDURE create_organization_branding(
-    IN p_organization_id UUID,
-    IN p_logo_url VARCHAR,
-    IN p_primary_color VARCHAR,
-    IN p_secondary_color VARCHAR,
-    IN p_theme VARCHAR,
-    IN p_email_template TEXT
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_brandings (organization_id, logo_url, primary_color, secondary_color, theme, email_template)
-    VALUES (p_organization_id, p_logo_url, p_primary_color, p_secondary_color, p_theme, p_email_template);
-END;
-$$;
-
--- Update Branding
-CREATE OR REPLACE PROCEDURE update_organization_branding(
-    IN p_organization_id UUID,
-    IN p_logo_url VARCHAR,
-    IN p_primary_color VARCHAR,
-    IN p_secondary_color VARCHAR,
-    IN p_theme VARCHAR,
-    IN p_email_template TEXT
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_brandings
-    SET logo_url = p_logo_url,
-        primary_color = p_primary_color,
-        secondary_color = p_secondary_color,
-        theme = p_theme,
-        email_template = p_email_template,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Branding
-CREATE OR REPLACE PROCEDURE delete_organization_branding(IN p_organization_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_brandings
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id;
-END;
-$$;
-
--- Get Branding by Organization
-CREATE OR REPLACE FUNCTION get_branding_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    organization_id UUID,
-    logo_url VARCHAR,
-    primary_color VARCHAR,
-    secondary_color VARCHAR,
-    theme VARCHAR,
-    email_template TEXT,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, organization_id, logo_url, primary_color, secondary_color, theme, email_template, created_at, updated_at
-    FROM organization_brandings
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
-
-
--- =====================================================
--- ORGANIZATION BILLING CRUD
--- =====================================================
-
--- Create Billing
-CREATE OR REPLACE PROCEDURE create_organization_billing(
-    IN p_organization_id UUID,
-    IN p_plan plan_type,
-    IN p_payment_method VARCHAR,
-    IN p_subscription_id VARCHAR,
-    IN p_next_billing_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    INSERT INTO organization_billings (organization_id, plan, payment_method, subscription_id, next_billing_at)
-    VALUES (p_organization_id, p_plan, p_payment_method, p_subscription_id, p_next_billing_at);
-END;
-$$;
-
--- Update Billing
-CREATE OR REPLACE PROCEDURE update_organization_billing(
-    IN p_organization_id UUID,
-    IN p_plan plan_type,
-    IN p_payment_method VARCHAR,
-    IN p_subscription_id VARCHAR,
-    IN p_next_billing_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_billings
-    SET plan = p_plan,
-        payment_method = p_payment_method,
-        subscription_id = p_subscription_id,
-        next_billing_at = p_next_billing_at,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id AND deleted_at IS NULL;
-END;
-$$;
-
--- Soft Delete Billing
-CREATE OR REPLACE PROCEDURE delete_organization_billing(IN p_organization_id UUID)
-LANGUAGE plpgsql AS $$
-BEGIN
-    UPDATE organization_billings
-    SET deleted_at = CURRENT_TIMESTAMP
-    WHERE organization_id = p_organization_id;
-END;
-$$;
-
--- Get Billing by Organization
-CREATE OR REPLACE FUNCTION get_billing_by_organization(p_org_id UUID)
-RETURNS TABLE (
-    id UUID,
-    organization_id UUID,
-    plan VARCHAR,
-    payment_method VARCHAR,
-    subscription_id VARCHAR,
-    next_billing_at TIMESTAMP,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-)
-LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN QUERY
-    SELECT id, organization_id, plan::text, payment_method, subscription_id, next_billing_at, created_at, updated_at
-    FROM organization_billings
-    WHERE organization_id = p_org_id AND deleted_at IS NULL;
-END;
-$$;
