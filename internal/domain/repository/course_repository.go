@@ -14,6 +14,7 @@ type CourseRepository interface {
 	Delete(CourseID uuid.UUID) error
 	GetByID(CourseID uuid.UUID) ( *model.Course, error)
 	GetAll() ([]*model.Course, error)
+	FindInstructor(InstructorID string) (*model.Course, error)
 }
 
 

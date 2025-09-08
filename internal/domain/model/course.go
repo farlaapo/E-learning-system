@@ -1,11 +1,9 @@
 package model
 
-
 import (
-	
-	"github.com/gofrs/uuid"
+	"time"
 
-	
+	"github.com/gofrs/uuid"
 )
 
 type Course struct {
@@ -13,4 +11,7 @@ type Course struct {
 	Title        string
 	Description  string
 	InstructorID uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
 }

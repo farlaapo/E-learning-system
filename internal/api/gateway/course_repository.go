@@ -14,21 +14,39 @@ type CourseRepositoryImpl struct {
 	db *sql.DB
 }
 
+// FindInstructor implements repository.CourseRepository.
+func (r *CourseRepositoryImpl) FindInstructor(InstructorID string) (*model.Course, error) {
+	var course model.Course
+
+	query := `SELECT * FROM et_courses_by_instructor($1)`
+	err := r.db.QueryRow(InstructorID, query).Scan(
+		&course.ID,
+		&course.Title,
+		&course.Description,
+		&course.InstructorID,
+	)
+	if err != nil {
+		 log.Printf("failed to find instructor ID %v ", err)
+	}
+
+	return  &course, nil
+}
+
 // Create implements repository.CourseRepository.
 func (r *CourseRepositoryImpl) Create(Course *model.Course) error {
 	_, err := r.db.Exec(`Call create_course($1, $2, $3, $4)`,
-   Course.ID,
-   Course.Title,
-   Course.Description,
-   Course.InstructorID)
-   if err != nil  {
-	log.Printf("Error calling create_course: %v", err)
-	return  err
- }
+		Course.ID,
+		Course.Title,
+		Course.Description,
+		Course.InstructorID)
+	if err != nil {
+		log.Printf("Error calling create_course: %v", err)
+		return err
+	}
 
- log.Printf("Course created: %+v", Course)
- return nil
- 
+	log.Printf("Course created: %+v", Course)
+	return nil
+
 }
 
 // Delete implements repository.CourseRepository.
@@ -106,13 +124,13 @@ func (r *CourseRepositoryImpl) GetByID(CourseID uuid.UUID) (*model.Course, error
 // Update implements repository.CourseRepository.
 func (r *CourseRepositoryImpl) Update(Course *model.Course) error {
 	_, err := r.db.Exec(`CALL update_course($1, $2, $3, $4)`,
-  Course.ID, Course.Title, Course.Description, Course.InstructorID)
+		Course.ID, Course.Title, Course.Description, Course.InstructorID)
 	if err != nil {
 		log.Printf("Error calling update_course: %v", err)
 		return err
 	}
 
-	log.Printf("Course updated: %+v",Course )
+	log.Printf("Course updated: %+v", Course)
 	return nil
 }
 
