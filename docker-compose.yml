@@ -25,6 +25,7 @@ services:
     volumes:
       - ./pkg/config/.env:/app/.env
       - ./internal/config/config.yaml:/app/config/config.yaml
+      - ./migrations:/app/migrations
     ports:
       - "8080:8080"
     networks:

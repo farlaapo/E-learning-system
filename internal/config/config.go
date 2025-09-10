@@ -54,6 +54,23 @@ func LoadEnv() {
 	}
 }
 
+
+func (c *DBConfig) GetDatabaseURL() string {
+	if c.DatabaseURL != "" {
+		return c.DatabaseURL
+	}
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		c.DBUser,
+		c.DBPassword,
+		c.DBHost,
+		c.DBPort,
+		c.DBName,
+		c.DBSSLMode,
+	)
+}
+
+
 // getEnv gets env var or fallback
 func getEnv(key, fallback string) string {
 	if val, ok := os.LookupEnv(key); ok && val != "" {
@@ -124,4 +141,7 @@ func InitDB(cfg *DBConfig) *sql.DB {
 
 	log.Println("Connected to the database successfully.")
 	return db
+
+ 
 }
+

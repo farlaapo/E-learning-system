@@ -15,6 +15,9 @@ import (
 	// "net/http"
 	// "os"
 	// "time"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -36,18 +39,36 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config.yaml: %v", err)
 	}
+	
 
 	dbCfg := config.LoadDBConfig()
 	db := config.InitDB(dbCfg)
 	if db == nil {
 		log.Fatal("Failed to initialize the database")
 	}
+
+	
+	//---MIGRATIONS ----
+	DB  := dbCfg.GetDatabaseURL()
+	m, err := migrate.New(
+		"file://migrations", DB,
+	)
+	if err != nil {
+		log.Fatalf("migrations failed: %v", err)
+	}
+
+	if err := m.Up(); err != nil  && err != migrate.ErrNoChange {
+		log.Fatalf("migration failed: %v", err)
+	}
+
+	fmt.Println("database migrated successfully")
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Printf("Error closing DB: %v", err)
 		}
 	}()
 
+	
 	fmt.Printf("Server running on port %s in %s mode\n", appCfg.App.Port, appCfg.App.Env)
 	var dbConn *sql.DB = db
 
@@ -74,6 +95,7 @@ func main() {
 	// Register API Routes
 	routes.RegisterUserRoutes(r, userController, tokenRepo)
 	routes.RegisterCourseRoutes(r, courseController, tokenRepo)
+
 
 	// Start Gin server (blocks here, keeps container alive)
 	if err := r.Run(fmt.Sprintf(":%s", appCfg.App.Port)); err != nil {

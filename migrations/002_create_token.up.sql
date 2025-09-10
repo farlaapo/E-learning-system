@@ -5,11 +5,7 @@ DROP PROCEDURE IF EXISTS create_token(UUID, UUID, TEXT, TIMESTAMP, TIMESTAMP, TI
 DROP FUNCTION IF EXISTS get_token_by_token(TEXT);
 DROP TABLE IF EXISTS tokens CASCADE;
 
--- ===============================
--- Enable UUID extensions
--- ===============================
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 
 -- ===============================
 -- Create tokens table
