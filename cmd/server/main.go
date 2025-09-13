@@ -75,13 +75,18 @@ func main() {
 	userRepo := gateway.NewUserRepositry(dbConn)
 	tokenRepo := gateway.NewTokenRepository(dbConn)
 	courseRepo := gateway.NewCourserRepositry(dbConn)
+	enrollmentRepo := gateway.NewEnrollmentRepository(dbConn)
+
 
 	// Initialize Services
 	userService := service.NewUserService(userRepo, tokenRepo)
 	courseService := service.NewCourseService(courseRepo, tokenRepo)
+	enrollmnetsService := service.NewEnrollmentService(enrollmentRepo, tokenRepo)
 	// Initialize Controllers
 	userController := controller.NewUserController(userService)
 	courseController := controller.NewCourseController(courseService)
+	enrollmentControlller := controller.NewEnrollmentController(enrollmnetsService)
+
 	// Setup Gin HTTP Server
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -95,6 +100,7 @@ func main() {
 	// Register API Routes
 	routes.RegisterUserRoutes(r, userController, tokenRepo)
 	routes.RegisterCourseRoutes(r, courseController, tokenRepo)
+	routes.RegisterEnrollmentRoutes(r, *enrollmentControlller, tokenRepo)
 
 
 	// Start Gin server (blocks here, keeps container alive)

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RegisteCourseRoutes registers user-related routes
+// RegisteCourseRoutes registers course-related routes
 func RegisterCourseRoutes(router *gin.Engine, courseController *controller.CourseController, tokenRepo repository.TokenRepository) {
 	// Auth middleware
 	authMiddleware := middleware.AuthMiddleware(tokenRepo)
@@ -18,7 +18,8 @@ func RegisterCourseRoutes(router *gin.Engine, courseController *controller.Cours
 	{
 		courseGroup.Use(authMiddleware)
 		{
-			courseGroup.GET("", courseController.CreateCourse)
+			courseGroup.POST("", courseController.CreateCourse)
+			courseGroup.GET("", courseController.ListAllCourse)
 			courseGroup.GET("/:id", courseController.GetCourseById)
 			courseGroup.PUT("/:id", courseController.UpdateCourse)
 			courseGroup.DELETE("/:id", courseController.DeleteCourse)

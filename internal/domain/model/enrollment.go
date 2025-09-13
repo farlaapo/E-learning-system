@@ -16,4 +16,8 @@ type Enrollment struct {
 	Completed           bool
 	CertificateIssuedAt *time.Time
 	CertificateTemplate string
+	Created_at  time.Time
+	Updated_at   time.Time
+	Deleted_at   *time.Time
 }
+

@@ -34,8 +34,8 @@ func (r *CourseRepositoryImpl) FindInstructor(InstructorID string) (*model.Cours
 
 // Create implements repository.CourseRepository.
 func (r *CourseRepositoryImpl) Create(Course *model.Course) error {
-	_, err := r.db.Exec(`Call create_course($1, $2, $3, $4)`,
-		Course.ID,
+	_, err := r.db.Exec(`CALL create_course($1, $2, $3, $4)`,
+	  Course.ID,
 		Course.Title,
 		Course.Description,
 		Course.InstructorID)
@@ -79,6 +79,8 @@ func (r *CourseRepositoryImpl) GetAll() ([]*model.Course, error) {
 			&course.Title,
 			&course.Description,
 			&course.InstructorID,
+			&course.CreatedAt,
+			&course.UpdatedAt,
 		)
 		if err != nil {
 			log.Printf("Error scanning course row: %v", err)
@@ -108,6 +110,8 @@ func (r *CourseRepositoryImpl) GetByID(CourseID uuid.UUID) (*model.Course, error
 		&course.Title,
 		&course.Description,
 		&course.InstructorID,
+		&course.CreatedAt,
+		&course.UpdatedAt, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
