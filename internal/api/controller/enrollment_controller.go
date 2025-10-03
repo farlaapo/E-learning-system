@@ -62,7 +62,7 @@ func (Ec *EnrollmentController) UpdateEnrollment(c * gin.Context) {
 	}
 
 	//retun
-	c.JSON(200, "succesfully updated!",)
+	c.JSON(200, "succesfully updated!")
 
 
 }

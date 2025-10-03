@@ -15,39 +15,6 @@ type enrollmentRepositoryImpl struct {
 	db *sql.DB
 }
 
-func (r *enrollmentRepositoryImpl) GetByID(enrollmentID uuid.UUID) (*model.Enrollment, error) {
-	  
-    query := `SELECT * FROM get_enrollment_by_id($1)`
-    row := r.db.QueryRow(query, enrollmentID)
-
-    var enrollment model.Enrollment
-    var deletedAt sql.NullTime
-
-    err := row.Scan(
-        &enrollment.ID,
-        &enrollment.CourseID,
-        &enrollment.UserID,
-        &enrollment.EnrollmentAt,
-        &enrollment.Completed,
-        &enrollment.CertificateIssuedAt,
-        &enrollment.CertificateTemplate,
-        &enrollment.CreatedAt,
-        &enrollment.UpdatedAt,
-        &deletedAt,
-    )
-    if err != nil {
-        return nil, err
-    }
-
-    // Handle nullable deleted_at
-    if deletedAt.Valid {
-        enrollment.DeletedAt = &deletedAt.Time
-    }
-
-    return &enrollment, nil
-}
-
-
 
 // Create implements repository.EnrolledRepository.
 func (r *enrollmentRepositoryImpl) Create(enrollment *model.Enrollment) error {
@@ -78,7 +45,7 @@ func (r *enrollmentRepositoryImpl) Delete(enrollmentID uuid.UUID) error {
 		return err
 	}
 
-	log.Printf("Course created %+v", enrollmentID)
+	log.Printf("enrollment created %+v", enrollmentID)
 	return nil
 }
 
@@ -115,6 +82,37 @@ func (r *enrollmentRepositoryImpl) GetAll() ([]*model.Enrollment, error) {
     return enrollments, nil
 }
 
+func (r *enrollmentRepositoryImpl) GetByID(enrollmentID uuid.UUID) (*model.Enrollment, error) {
+	  
+    query := `SELECT * FROM get_enrollment_by_id($1)`
+    row := r.db.QueryRow(query, enrollmentID)
+
+    var enrollment model.Enrollment
+    var deletedAt sql.NullTime
+
+    err := row.Scan(
+        &enrollment.ID,
+        &enrollment.CourseID,
+        &enrollment.UserID,
+        &enrollment.EnrollmentAt,
+        &enrollment.Completed,
+        &enrollment.CertificateIssuedAt,
+        &enrollment.CertificateTemplate,
+        &enrollment.CreatedAt,
+        &enrollment.UpdatedAt,
+        &deletedAt,
+    )
+    if err != nil {
+        return nil, err
+    }
+
+    // Handle nullable deleted_at
+    if deletedAt.Valid {
+        enrollment.DeletedAt = &deletedAt.Time
+    }
+
+    return &enrollment, nil
+}
 
 
 // Update implements repository.EnrolledRepository.

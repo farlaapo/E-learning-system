@@ -9,8 +9,8 @@ import (
 
 type Enrollment struct {
     ID                  uuid.UUID   `json:"id"`
-    CourseID            uuid.UUID   `json:"course_id"`
-    UserID              uuid.UUID   `json:"user_id"`
+    CourseID            uuid.UUID   `json:"course_id"  binding:"required" `
+    UserID              uuid.UUID   `json:"user_id"  binding:"required"`
     EnrollmentAt        time.Time   `json:"enrollment_at"`
     Completed           bool        `json:"completed"`
     CertificateIssuedAt *time.Time  `json:"certificate_issued_at,omitempty"` // nullable

@@ -17,25 +17,6 @@ CREATE TABLE IF NOT EXISTS enrollments (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL
 );
--- --------- ffghjkl;
--- CREATE OR REPLACE PROCEDURE  create_course(
---     IN P_id UUID,
---     IN p_title VARCHAR(255),
---     IN p_description TEXT,
---     IN p_instructor_id UUID,
---     IN P_category  VARCHAR(100),
---     IN P_tags  TEXT[]
-
--- )
--- LANGUAGE plpgsql AS $$
--- BEGIN   
---     INSERT INTO courses (
---         id, title, description, instructor_id, category, tags
---     )VALUES (
---         P_id, p_title, p_description, p_instructor_id, P_category, P_tags
---     );
--- END;
--- $$;
 
 
 --- Create enrollment ---

@@ -52,7 +52,7 @@ func (s *enrollmentService) CreateEnrollment(courseId uuid.UUID, userId uuid.UUI
         CertificateIssuedAt: certIssuedAt, // nil if not completed
         CertificateTemplate: &certificateTemplate,
         CreatedAt:           now,
-        UpdatedAt:           now,
+        
     }
 
     // log the new enrollment

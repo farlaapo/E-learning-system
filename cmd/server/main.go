@@ -76,16 +76,29 @@ func main() {
 	tokenRepo := gateway.NewTokenRepository(dbConn)
 	courseRepo := gateway.NewCourserRepositry(dbConn)
 	enrollmentRepo := gateway.NewEnrollmentRepository(dbConn)
+	moduleRepo := gateway.NewModuleRepository(dbConn)
+	lessonRepo := gateway.NewLessonRepository(dbConn)
+	orgRepo := gateway.NewOrganizationRepository(dbConn)
+
 
 
 	// Initialize Services
 	userService := service.NewUserService(userRepo, tokenRepo)
 	courseService := service.NewCourseService(courseRepo, tokenRepo)
 	enrollmnetsService := service.NewEnrollmentService(enrollmentRepo, tokenRepo)
+	moduleService := service.NewModuleService(moduleRepo, tokenRepo)
+	lessonService := service.NewlessonService(lessonRepo, tokenRepo)
+	orgService := service.NewOrganizationService(orgRepo, tokenRepo)
+
+
 	// Initialize Controllers
 	userController := controller.NewUserController(userService)
 	courseController := controller.NewCourseController(courseService)
 	enrollmentControlller := controller.NewEnrollmentController(enrollmnetsService)
+	moduleController := controller.NewModuleController(moduleService)
+	lessonController := controller.NewLessonController(lessonService)
+	orgController := controller.NeworgsController(orgService)
+
 
 	// Setup Gin HTTP Server
 	r := gin.Default()
@@ -101,6 +114,9 @@ func main() {
 	routes.RegisterUserRoutes(r, userController, tokenRepo)
 	routes.RegisterCourseRoutes(r, courseController, tokenRepo)
 	routes.RegisterEnrollmentRoutes(r, *enrollmentControlller, tokenRepo)
+	routes.RegisterModuleRoutes(r, *moduleController, tokenRepo )
+	routes.RegisterLessonRoutes(r, *lessonController, tokenRepo)
+	routes.RegisterOrganizationRoutes(r, *orgController, tokenRepo)
 
 
 	// Start Gin server (blocks here, keeps container alive)
