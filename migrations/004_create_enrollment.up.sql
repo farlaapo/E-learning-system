@@ -1,42 +1,64 @@
---- CREATE ENUM type for enrollment status if not exists 
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'course_status') THEN
-        CREATE TYPE course_status AS ENUM ('pending', 'active', 'completed', 'canceled')
-    END IF;
-END
-$$;
+-- CREATE ENUM type for enrollment status if not exists  --
 
------ Create enrollments table if not exists
-CREATE TABLE IF NOT EXISTS enrollments(
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  course_id UUID NOT NULL REFERENCES  courses(id) ON DELETE CASCADE,
-  user_id UUD NOT NULL REFERENCES users(id) on DELETE CASCADE,
-  enrollment_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  completed  BOOLEAN  NOT NULL DEFAULT FALSE,
-  certificate_issued_at TIMESTAMP NULL, 
-  certificate_template TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+   CREATE TYPE enrollment_status AS ENUM ('pending', 'active', 'completed', 'canceled');
+   
 
------ Create enrollment ------
-CREATE OR REPLACE  PROCEDURE create_enrollment(
-  IN p_id
-  IN P_course_id UUID,
+-- Create enrollments table if not exists --
+
+CREATE TABLE IF NOT EXISTS enrollments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    enrollment_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    certificate_issued_at TIMESTAMP NULL,
+    certificate_template TEXT DEFAULT 'default-template-v1',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL
+);
+-- --------- ffghjkl;
+-- CREATE OR REPLACE PROCEDURE  create_course(
+--     IN P_id UUID,
+--     IN p_title VARCHAR(255),
+--     IN p_description TEXT,
+--     IN p_instructor_id UUID,
+--     IN P_category  VARCHAR(100),
+--     IN P_tags  TEXT[]
+
+-- )
+-- LANGUAGE plpgsql AS $$
+-- BEGIN   
+--     INSERT INTO courses (
+--         id, title, description, instructor_id, category, tags
+--     )VALUES (
+--         P_id, p_title, p_description, p_instructor_id, P_category, P_tags
+--     );
+-- END;
+-- $$;
+
+
+--- Create enrollment ---
+CREATE OR REPLACE PROCEDURE create_enrollment(
+  IN p_id UUID,
+  IN p_course_id UUID,
   IN p_user_id UUID,
-  
+  IN p_completed BOOLEAN,
+  IN p_certificate_issued_at TIMESTAMP,
+  IN p_certificate_template TEXT
 )
 LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO enrollments (
-      id, course_id, user_id, enrollment_at, completed, certificate_issued_at, certificate_template
-    )VALUES (
-      uuid_generate_v4, course_id, user_id, CURRENT_TIMESTAMP, FALSE, NULL, NULL 
+      id, course_id, user_id, completed, certificate_issued_at, certificate_template
+    ) VALUES (
+      p_id, p_course_id, p_user_id, p_completed, p_certificate_issued_at, p_certificate_template
     );
 END;
 $$;
+
+
+
 
 
 ----- Update_enrollments --------
@@ -52,26 +74,27 @@ BEGIN
     SET completed = P_completed,
         certificate_template = p_certificate_template,
         updated_at = CURRENT_TIMESTAMP
-    WHERE id = p_id AND deleted_at IS  NULL
+    WHERE id = p_id AND deleted_at IS  NULL;
 END;
 $$;
 
------ get_enrollments_by_ID --------
-CREATE OR REPLACE FUNCTION get_enrollment_by_course(P_course_id UUID)
+----Get_Enrollment_BY_id
+CREATE OR REPLACE FUNCTION get_enrollment_by_id(P_id UUID)
 RETURNS TABLE (
   id UUID,
   course_id UUID,
   user_id UUID,
-  enrollment_at TIMESTAMP  ,
+  enrollment_at TIMESTAMP,
   completed BOOLEAN,
   certificate_issued_at TIMESTAMP,
-  certificate_template TEXT, 
+  certificate_template TEXT,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP
 )
+
 LANGUAGE plpgsql AS $$
-BEGIN 
+BEGIN
     RETURN QUERY
     SELECT 
         e.id,
@@ -82,23 +105,26 @@ BEGIN
         e.certificate_issued_at,
         e.certificate_template,
         e.created_at,
-        e.updated_at
+        e.updated_at,
+        e.deleted_at
     FROM enrollments e
-    WHER e_course_id = P_course_id AND e.deleted_at IS NULL;
+    WHERE e.id = P_id;
 END;
 $$;
 
------ get_enrollments --------
 
-CREATE OR REPLACE FUNCTION  get_all_enrollments()
+
+
+
+CREATE OR REPLACE FUNCTION get_all_enrollments()
 RETURNS TABLE (
   id UUID,
   course_id UUID,
   user_id UUID,
-  enrollment_at TIMESTAMP  ,
+  enrollment_at TIMESTAMP,
   completed BOOLEAN,
   certificate_issued_at TIMESTAMP,
-  certificate_template TEXT, 
+  certificate_template TEXT,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP
@@ -115,11 +141,13 @@ BEGIN
         e.certificate_issued_at,
         e.certificate_template,
         e.created_at,
-        e.updated_at
+        e.updated_at,
+        e.deleted_at
     FROM enrollments e
-    WHERE c.deleted_at IS NULL;
+    WHERE e.deleted_at IS NULL;  -- exclude soft-deleted
 END;
-$$
+$$;
+
 
 
 ----------- Delete_enrollments----------

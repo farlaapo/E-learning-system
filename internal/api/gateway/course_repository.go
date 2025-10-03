@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/gofrs/uuid"
+	"github.com/lib/pq"
 )
 
 type CourseRepositoryImpl struct {
@@ -24,21 +25,30 @@ func (r *CourseRepositoryImpl) FindInstructor(InstructorID string) (*model.Cours
 		&course.Title,
 		&course.Description,
 		&course.InstructorID,
+		&course.Category,
+		pq.Array(&course.Tags),
 	)
 	if err != nil {
-		 log.Printf("failed to find instructor ID %v ", err)
+		log.Printf("failed to find instructor ID %v ", err)
 	}
 
-	return  &course, nil
+	return &course, nil
 }
 
 // Create implements repository.CourseRepository.
 func (r *CourseRepositoryImpl) Create(Course *model.Course) error {
-	_, err := r.db.Exec(`CALL create_course($1, $2, $3, $4)`,
-	  Course.ID,
+
+	// // Ensure Tags is an empty slice if nil
+  //   if Course.Tags == nil {
+  //       Course.Tags = []string{}
+  //   } 
+	_, err := r.db.Exec(`CALL create_course($1, $2, $3, $4, $5, $6)`,
+		Course.ID,
 		Course.Title,
 		Course.Description,
-		Course.InstructorID)
+		Course.InstructorID,
+		Course.Category,
+		pq.Array(Course.Tags))
 	if err != nil {
 		log.Printf("Error calling create_course: %v", err)
 		return err
@@ -79,6 +89,8 @@ func (r *CourseRepositoryImpl) GetAll() ([]*model.Course, error) {
 			&course.Title,
 			&course.Description,
 			&course.InstructorID,
+			&course.Category,
+			pq.Array(&course.Tags),
 			&course.CreatedAt,
 			&course.UpdatedAt,
 		)
@@ -110,8 +122,10 @@ func (r *CourseRepositoryImpl) GetByID(CourseID uuid.UUID) (*model.Course, error
 		&course.Title,
 		&course.Description,
 		&course.InstructorID,
+		&course.Category,
+		pq.Array(&course.Tags),
 		&course.CreatedAt,
-		&course.UpdatedAt, 
+		&course.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -127,8 +141,8 @@ func (r *CourseRepositoryImpl) GetByID(CourseID uuid.UUID) (*model.Course, error
 
 // Update implements repository.CourseRepository.
 func (r *CourseRepositoryImpl) Update(Course *model.Course) error {
-	_, err := r.db.Exec(`CALL update_course($1, $2, $3, $4)`,
-		Course.ID, Course.Title, Course.Description, Course.InstructorID)
+	_, err := r.db.Exec(`CALL update_course($1, $2, $3, $4, $5, $6)`,
+		Course.ID, Course.Title, Course.Description, Course.InstructorID, Course.Category, pq.Array(Course.Tags))
 	if err != nil {
 		log.Printf("Error calling update_course: %v", err)
 		return err

@@ -21,12 +21,12 @@ func NewCourseController(courseService service.CourseService) *CourseController 
 func (Cc *CourseController) CreateCourse(c *gin.Context) {
 	var course model.Course
 
-	if err := c.BindJSON(&course); err != nil {
+	if err := c.ShouldBindJSON(&course); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
 
-	createdCourse, err := Cc.courseService.CreateCourse(course.Title, course.Description, course.InstructorID)
+	createdCourse, err := Cc.courseService.CreateCourse(course.Title, course.Description, course.InstructorID, course.Tags, course.Category)
 	if err != nil {
 		c.JSON(500, gin.H{"message": err.Error()})
 		return

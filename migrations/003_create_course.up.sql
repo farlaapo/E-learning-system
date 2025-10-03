@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS courses (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     instructor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(100),
+    tags  TEXT[],
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP
@@ -21,15 +23,17 @@ CREATE OR REPLACE PROCEDURE  create_course(
     IN P_id UUID,
     IN p_title VARCHAR(255),
     IN p_description TEXT,
-    IN p_instructor_id UUID
+    IN p_instructor_id UUID,
+    IN P_category  VARCHAR(100),
+    IN P_tags  TEXT[]
 
 )
 LANGUAGE plpgsql AS $$
 BEGIN   
     INSERT INTO courses (
-        id, title, description, instructor_id
+        id, title, description, instructor_id, category, tags
     )VALUES (
-        P_id, p_title, p_description, p_instructor_id
+        P_id, p_title, p_description, p_instructor_id, P_category, P_tags
     );
 END;
 $$;
@@ -43,7 +47,9 @@ CREATE OR REPLACE PROCEDURE update_course(
     IN p_id UUID,
     IN p_title VARCHAR,
     IN p_description TEXT,
-    IN p_instructor_id UUID
+    IN p_instructor_id UUID,
+    IN P_category  VARCHAR(100),
+    IN P_tags  TEXT[]
 )
 LANGUAGE plpgsql
 AS $$
@@ -51,7 +57,7 @@ BEGIN
     UPDATE courses
     SET title = p_title,
         description = p_description,
-        instructor_id = p_instructor_id,
+        instructor_id = p_instructor_id, category = P_category, tags = P_tags,
         updated_at = NOW()
     WHERE id = p_id;
     
@@ -76,6 +82,8 @@ RETURNS TABLE (
     title VARCHAR(255),
     description TEXT,
     instructor_id UUID,
+    category VARCHAR(100),
+    tags TEXT[],
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 ) 
@@ -87,6 +95,8 @@ BEGIN
         c.title,
         c.description, 
         c.instructor_id,
+        c.category,
+        c.tags,
         c.created_at,
         c.updated_at
     FROM courses c
@@ -101,13 +111,15 @@ RETURNS TABLE (
     title VARCHAR,
     description TEXT,
     instructor_id UUID,
+    category VARCHAR(100),
+    tags TEXT[],
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 ) 
 LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
-    SELECT c.id, c.title, c.description, c.instructor_id, c.created_at, c.updated_at
+    SELECT c.id, c.title, c.description, c.instructor_id,   c.category, c.tags, c.created_at, c.updated_at
     FROM courses c
     WHERE c.deleted_at IS NULL;
 END;
@@ -121,14 +133,15 @@ RETURNS TABLE (
     title VARCHAR,
     description TEXT,
     instructor_id UUID,
+    category VARCHAR(100),
+    tags TEXT[],
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, title, description, instructor_id, created_at, updated_at
-    FROM courses
-    WHERE instructor_id = p_instructor_id
-    ORDER BY created_at DESC;
+    SELECT c.id, c.title, c.description, c.instructor_id, c.category, c.tags, c.created_at, c.updated_at
+    FROM courses c
+    WHERE c.id =  p_instructor_id;
 END;
 $$ LANGUAGE plpgsql;

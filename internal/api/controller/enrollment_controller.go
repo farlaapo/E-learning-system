@@ -18,6 +18,7 @@ func NewEnrollmentController(entollmentService service.EnrollmentService) *Enrol
 		enrollmentService: entollmentService,
 	}
 }
+
 // CreateEnrollment handler
 func (Ec *EnrollmentController)  CreateEnrollment(c * gin.Context) {
    var enrollment model.Enrollment 
@@ -26,8 +27,8 @@ func (Ec *EnrollmentController)  CreateEnrollment(c * gin.Context) {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
-
-	createdCourse, err := Ec.enrollmentService.CreateEnrollment(enrollment.CourseID, enrollment.UserID, enrollment.CertificateTemplate, enrollment.Completed  )
+	
+	createdCourse, err := Ec.enrollmentService.CreateEnrollment(enrollment.CourseID, enrollment.UserID, *enrollment.CertificateTemplate, enrollment.Completed  )
 	if err != nil {
 		c.JSON(500, gin.H{"message": err.Error()})
 		return
@@ -61,7 +62,7 @@ func (Ec *EnrollmentController) UpdateEnrollment(c * gin.Context) {
 	}
 
 	//retun
-	c.JSON(200, "succesfully updated!")
+	c.JSON(200, "succesfully updated!",)
 
 
 }

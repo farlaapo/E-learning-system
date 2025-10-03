@@ -12,7 +12,7 @@ import (
 )
 
 type CourseService interface {
-	CreateCourse(title, description string, instructoRID uuid.UUID) (*model.Course, error)
+	CreateCourse(title, description string, instructoRID uuid.UUID, tags []string, category string) (*model.Course, error)
 	UpdateCourse(Course *model.Course) error
 	DeleteCourse(courseID uuid.UUID) error
 	GetCourseById(courseID uuid.UUID) (*model.Course, error)
@@ -25,7 +25,7 @@ type courseService struct {
 }
 
 // CreateCourse implements CourseService.
-func (s *courseService) CreateCourse(title string, description string, instructoRID uuid.UUID) (*model.Course, error) {
+func (s *courseService) CreateCourse(title string, description string, instructoRID uuid.UUID, tags []string,  category string) (*model.Course, error) {
 	// Generate a new UUID for the course ID
 	neoCourse, err := uuid.NewV4()
 	if err != nil {
@@ -38,9 +38,11 @@ func (s *courseService) CreateCourse(title string, description string, instructo
 		Title:        title,
 		Description:  description,
 		InstructorID: instructoRID,
+		Category: category,
+		Tags: tags,
 		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		DeletedAt:    &time.Time{},
+		UpdatedAt: time.Now(),
+		DeletedAt: &time.Time{},
 	}
 	// log the new course creation attemptt
 	log.Printf("creating course: %+v", amCourse)

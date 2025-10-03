@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 1. Create ENUM for user roles (run once)
-CREATE TYPE user_role AS ENUM ('admin', 'tutor', 'student');
+CREATE TYPE user_role AS ENUM ('admin', 'Instructor', 'student');
 
 -- 2. Create users table
 CREATE TABLE IF NOT EXISTS users (

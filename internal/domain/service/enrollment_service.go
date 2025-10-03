@@ -26,38 +26,47 @@ type enrollmentService struct {
 }
 
 // CreateEnrollment implements EnrollmentService.
-func (s *enrollmentService) CreateEnrollment(courseId uuid.UUID, userId uuid.UUID, CertificateTemplate string, completed bool) (*model.Enrollment, error) {
-	 // generate UUID 
-	 neoEnrollment, err := uuid.NewV4()
-	 if err != nil {
-		return   nil, err
-	 }
+func (s *enrollmentService) CreateEnrollment(courseId uuid.UUID, userId uuid.UUID, certificateTemplate string, completed bool) (*model.Enrollment, error) {
 
-	 // create enrollment
-	 amEnrollment := &model.Enrollment{
-		ID: neoEnrollment,
-		CourseID: courseId,
-		UserID: userId,
-		EnrolledAt: time.Now(),
-		CertificateTemplate: CertificateTemplate,
-		CertificateIssuedAt: &time.Time{},
-		Completed: completed,
-		Created_at: time.Now(),
-		Updated_at: time.Now(),
-		Deleted_at: &time.Time{},
-	 }
-   
-	 /// log the new enrollment creation attemptt
-	 log.Printf("enrollment created %+v", amEnrollment)
+    // generate UUID
+    neoEnrollment, err := uuid.NewV4()
+    if err != nil {
+        return nil, err
+    }
 
-	 // save 
-	 err = s.repo.Create(amEnrollment)
-	 if err != nil {
-		return nil, fmt.Errorf("failed to create enrollment")
-	 }
+    now := time.Now()
 
-	 return  amEnrollment, nil
-	 }
+    // set CertificateIssuedAt only if completed
+    var certIssuedAt *time.Time
+    if completed {
+        certIssuedAt = &now
+    }
+
+    // create enrollment
+    amEnrollment := &model.Enrollment{
+        ID:                  neoEnrollment,
+        CourseID:            courseId,
+        UserID:              userId,
+        EnrollmentAt:        now,           // enrollment timestamp
+        Completed:           completed,
+        CertificateIssuedAt: certIssuedAt, // nil if not completed
+        CertificateTemplate: &certificateTemplate,
+        CreatedAt:           now,
+        UpdatedAt:           now,
+    }
+
+    // log the new enrollment
+    log.Printf("enrollment created %+v", amEnrollment)
+
+    // save to repository
+    err = s.repo.Create(amEnrollment)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create enrollment: %w", err)
+    }
+
+    return amEnrollment, nil
+}
+
 
 
 // DeletEnrollment implements EnrollmentService.

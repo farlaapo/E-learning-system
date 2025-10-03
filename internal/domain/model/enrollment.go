@@ -7,17 +7,26 @@ import (
 	
 )
 
-
 type Enrollment struct {
-	ID                  uuid.UUID
-	CourseID            uuid.UUID
-	UserID              uuid.UUID
-	EnrolledAt          time.Time
-	Completed           bool
-	CertificateIssuedAt *time.Time
-	CertificateTemplate string
-	Created_at  time.Time
-	Updated_at   time.Time
-	Deleted_at   *time.Time
+    ID                  uuid.UUID   `json:"id"`
+    CourseID            uuid.UUID   `json:"course_id"`
+    UserID              uuid.UUID   `json:"user_id"`
+    EnrollmentAt        time.Time   `json:"enrollment_at"`
+    Completed           bool        `json:"completed"`
+    CertificateIssuedAt *time.Time  `json:"certificate_issued_at,omitempty"` // nullable
+    CertificateTemplate *string     `json:"certificate_template,omitempty"`  // nullable
+    CreatedAt           time.Time   `json:"created_at"`
+    UpdatedAt           time.Time   `json:"updated_at"`
+    DeletedAt           *time.Time  `json:"deleted_at,omitempty"`            // nullable
 }
+
+
+
+
+
+
+
+
+
+
 

@@ -14,15 +14,15 @@ func RegisterEnrollmentRoutes(router *gin.Engine, enrollmentController controlle
 	// Auth-middleware
 	authMidlleware := middleware.AuthMiddleware(tokenRepo)
  
-	enrollmentGroup := router.Group("/enrollment")
+	enrollmentGroup := router.Group("/enrollments")
 	{
      enrollmentGroup.Use(authMidlleware)
 		 {
 			enrollmentGroup.POST("", enrollmentController.CreateEnrollment)
 			enrollmentGroup.GET("/", enrollmentController.GetAllEnrollment)
 			enrollmentGroup.GET("/:id", enrollmentController.GetEnrollmentById)
-			enrollmentGroup.PUT(":/id", enrollmentController.UpdateEnrollment)
-			enrollmentGroup.DELETE(":/id", enrollmentController.DeletEnrollment)
+			enrollmentGroup.PUT("/:id", enrollmentController.UpdateEnrollment)
+			enrollmentGroup.DELETE("/:id", enrollmentController.DeletEnrollment)
 		 }
 	}
 	
