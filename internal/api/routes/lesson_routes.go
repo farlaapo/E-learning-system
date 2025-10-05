@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RegisteEnrollmentRoutes registers enrollment-related routes
+// RegisteLessonRoutes registers lesson-related routes
 func RegisterLessonRoutes(router *gin.Engine, lessonController controller.LessonController, tokenRepo repository.TokenRepository) {
   
 	// Auth-middleware

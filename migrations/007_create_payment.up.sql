@@ -157,7 +157,7 @@ END;
 $$;
 
 ---- GET ALL PAYMENTS ----
-CREATE OR REPLACE FUNCTION get_payment_id()
+CREATE OR REPLACE FUNCTION get_all_payment()
 RETURN TABLE (
    p_id UUID ,
    p_ user_id UUID ,
