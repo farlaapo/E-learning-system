@@ -76,7 +76,7 @@ func (r *ModuleRepositoryImpl) GetAll() ([]*model.Module, error) {
 // GetByID implements repository.ModuleRepository.
 func (r *ModuleRepositoryImpl) GetByID(moduleID uuid.UUID) (*model.Module, error) {
 	var m   model.Module
-	query := `SELECT * FROM get_enrollment_by_id($1)`
+	query := `SELECT * FROM get_module_by_id($1)`
 	row := r.db.QueryRow(query, moduleID)
 	err := row.Scan( 
 		&m.ID,
@@ -89,8 +89,8 @@ func (r *ModuleRepositoryImpl) GetByID(moduleID uuid.UUID) (*model.Module, error
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("course not found")
-			return nil, fmt.Errorf("course not found")
+			log.Printf("module not found")
+			return nil, fmt.Errorf("module not found")
 		}
 		log.Printf("DB error: %v", err)
 		return nil, err

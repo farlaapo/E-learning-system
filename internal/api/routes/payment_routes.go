@@ -14,7 +14,7 @@ func RegisterpaymentRoutes(router *gin.Engine, PaymentController controller.Paym
 	// Auth-middleware
 	authMidlleware := middleware.AuthMiddleware(tokenRepo)
  
-	paymentGroup := router.Group("/lessons")
+	paymentGroup := router.Group("/payments")
 	{
      paymentGroup.Use(authMidlleware)
 		 {

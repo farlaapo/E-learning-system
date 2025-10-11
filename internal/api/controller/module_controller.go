@@ -94,7 +94,7 @@ func (mC *ModuleController) UpdateModule(c * gin.Context)  {
 		return
 	}
   // bind with json
-	if err := c.BindJSON(&moduleID); err != nil {
+	if err := c.BindJSON(&module); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
