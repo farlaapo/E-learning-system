@@ -11,7 +11,18 @@ import (
 )
 
 type PaymentService interface {
-	CreatePayment(UserID uuid.UUID, Role string, Amount float64, Currency string, Method string, Type string) (*model.Payment, error)
+	CreatePayment(UserID uuid.UUID, Role string, Amount float64, Currency string, Method string, Type string,
+	status         string ,     
+	transactionRef string ,  
+	description    string   ,   
+	planName       string     , 
+	startDate      *time.Time  ,
+	endDate        *time.Time  ,
+	renewalDate    *time.Time  , 
+	cancelledAt    *time.Time ,
+	providerRef    string      ,
+	isRecurring    bool        ,
+	) (*model.Payment, error)
 	UpdatePayment(payment *model.Payment) error
 	DeletPayment(paymentID uuid.UUID) error
 	GetPaymentById(paymentID uuid.UUID) (*model.Payment, error)
@@ -24,24 +35,60 @@ type paymentService struct {
 }
 
 // CreatePayment implements PaymentService.
-func (s *paymentService) CreatePayment(UserID uuid.UUID, Role string, Amount float64, Currency string, Method string, Type string) (*model.Payment, error) {
-  // generete UUID
-	neoPayment, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+func (s *paymentService) CreatePayment(UserID uuid.UUID, Role string, Amount float64, Currency string, Method string, Type string,
+	status         string ,     
+	transactionRef string ,  
+	description    string   ,   
+	planName       string     , 
+	startDate      *time.Time  ,
+	endDate        *time.Time  ,
+	renewalDate    *time.Time  , 
+	cancelledAt    *time.Time ,
+	providerRef    string      ,
+	isRecurring    bool        ,
+) (*model.Payment, error) {
 
-	newPayment := &model.Payment{
-		ID: neoPayment,
-		UserID: UserID,
-		Role: Role,
-		Amount: Amount,
-		Currency: Currency,
-		Method: Method,
-		Type: Type,
-		CreatedAt: time.Now(),
-	}
-	// log the new enrollment
+	// allowed role
+	  allowedRoles := map[string] bool {
+			"student": true,
+			"tutor": true,
+		}
+
+		if !allowedRoles[Role] {
+			return nil, fmt.Errorf("invalid role or admins cannot create payments: %s", Role)
+		}
+
+
+    neoPayment, err := uuid.NewV4()
+    if err != nil {
+        return nil, err
+    }
+
+		now := time.Now()
+
+    newPayment := &model.Payment{
+    ID:             neoPayment,
+    UserID:         UserID,
+    Role:           Role,
+    Amount:         Amount,
+    Currency:       Currency,
+    Method:         Method,
+    Type:           Type,
+    Status:         "PENDING",
+    TransactionRef: transactionRef,
+    Description:    description,
+    PlanName:       planName,
+    StartDate:      startDate,
+    EndDate:        endDate,
+    RenewalDate:    renewalDate,
+    CancelledAt:    cancelledAt,
+    ProviderRef:    providerRef,
+    IsRecurring:    isRecurring,
+    CreatedAt:      now,
+    // UpdatedAt:      now,
+}
+
+
     log.Printf("payment created %+v", neoPayment)
 
     // save to repository
@@ -51,8 +98,8 @@ func (s *paymentService) CreatePayment(UserID uuid.UUID, Role string, Amount flo
     }
 
     return newPayment, nil
-
 }
+
 
 // DeletPayment implements PaymentService.
 func (s *paymentService) DeletPayment(paymentID uuid.UUID) error {

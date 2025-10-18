@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"E-Learning-System/internal/domain/model"
-	"E-Learning-System/internal/domain/service"
+	"e-learning-system/internal/domain/model"
+	"e-learning-system/internal/domain/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
@@ -53,7 +53,7 @@ func (ac *AdminController) CreateManagedEntity(c *gin.Context) {
 
 func (ac *AdminController) UpdateManagedEntity(c *gin.Context) {
 	var entity model.ManagedEntity
-
+ // param
 	entityParam := c.Param("id")
 	entityID, err := uuid.FromString(entityParam)
 	if err != nil {

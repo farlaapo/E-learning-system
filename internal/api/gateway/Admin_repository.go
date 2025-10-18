@@ -1,8 +1,8 @@
 package gateway
 
 import (
-	"E-Learning-System/internal/domain/model"
-	"E-Learning-System/internal/domain/repository"
+	"e-learning-system/internal/domain/model"
+	"e-learning-system/internal/domain/repository"
 	"database/sql"
 	"fmt"
 	"log"
@@ -52,31 +52,61 @@ func (r *AdminRepositoryImpl) CreateManagedEntity(entity *model.ManagedEntity) e
 	return nil
 }
 
-// Update Managed Entity
+
+// UpdateManagedEntity
 func (r *AdminRepositoryImpl) UpdateManagedEntity(entity *model.ManagedEntity) error {
-	_, err := r.db.Exec(`CALL update_managed_entity($1, $2, $3)`,
-		entity.ID, entity.Name, entity.Status)
-	if err != nil {
-		log.Printf("Error calling update_managed_entity: %v", err)
-		return err
-	}
-	log.Printf("Managed entity updated successfully: %+v", entity)
-	return nil
+    // Step 1: Check if the record exists
+    var exists bool
+    err := r.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM managed_entities WHERE id = $1)`, entity.ID).Scan(&exists)
+    if err != nil {
+        log.Printf("Error checking managed entity existence: %v", err)
+        return err
+    }
+
+    if !exists {
+        return fmt.Errorf("no managed entity found with ID %v", entity.ID)
+    }
+
+    // Step 2: Perform the update
+    _, err = r.db.Exec(`CALL update_managed_entity($1, $2, $3)`,
+        entity.ID, entity.Name, entity.Status)
+    if err != nil {
+        log.Printf("Error calling update_managed_entity: %v", err)
+        return err
+    }
+
+    log.Printf("Managed entity updated successfully: %+v", entity)
+    return nil
 }
 
 // Delete Managed Entity
 func (r *AdminRepositoryImpl) DeleteManagedEntity(id uuid.UUID) error {
-	_, err := r.db.Exec(`CALL delete_managed_entity($1)`, id)
-	if err != nil {
-		log.Printf("Error calling delete_managed_entity: %v", err)
-		return err
-	}
-	log.Printf("Managed entity deleted successfully: %v", id)
-	return nil
+    // Step 1: Check if the record exists
+    var exists bool
+    err := r.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM managed_entities WHERE id = $1)`, id).Scan(&exists)
+    if err != nil {
+        log.Printf("Error checking managed entity existence: %v", err)
+        return err
+    }
+
+    if !exists {
+        return fmt.Errorf("no managed entity found with ID %v", id)
+    }
+
+    // Step 2: Perform the delete
+    _, err = r.db.Exec(`CALL delete_managed_entity($1)`, id)
+    if err != nil {
+        log.Printf("Error calling delete_managed_entity: %v", err)
+        return err
+    }
+
+    log.Printf("Managed entity deleted successfully: %v", id)
+    return nil
 }
 
+
 // Get All Managed Entities
-func (r *AdminRepositoryImpl) GetAllManagedEntities() ([]model.ManagedEntity, error) {
+func (r *AdminRepositoryImpl) GetAllManagedEntities() ([]*model.ManagedEntity, error) {
 	rows, err := r.db.Query(`SELECT * FROM get_all_managed_entities()`)
 	if err != nil {
 		log.Printf("Error querying get_all_managed_entities: %v", err)
@@ -84,7 +114,7 @@ func (r *AdminRepositoryImpl) GetAllManagedEntities() ([]model.ManagedEntity, er
 	}
 	defer rows.Close()
 
-	var entities []model.ManagedEntity
+	var entities []*model.ManagedEntity
 	for rows.Next() {
 		var entity model.ManagedEntity
 		err := rows.Scan(
@@ -98,7 +128,7 @@ func (r *AdminRepositoryImpl) GetAllManagedEntities() ([]model.ManagedEntity, er
 			log.Printf("Error scanning managed entity row: %v", err)
 			return nil, err
 		}
-		entities = append(entities, entity)
+		entities = append(entities, &entity)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -139,7 +169,7 @@ func (r *AdminRepositoryImpl) UpdateApprovalStatus(id uuid.UUID, status string, 
 }
 
 // Get All Approval Requests
-func (r *AdminRepositoryImpl) GetAllApprovalRequests() ([]model.ApprovalRequest, error) {
+func (r *AdminRepositoryImpl) GetAllApprovalRequests() ([]*model.ApprovalRequest, error) {
 	rows, err := r.db.Query(`SELECT * FROM get_all_approval_requests()`)
 	if err != nil {
 		log.Printf("Error querying get_all_approval_requests: %v", err)
@@ -147,7 +177,7 @@ func (r *AdminRepositoryImpl) GetAllApprovalRequests() ([]model.ApprovalRequest,
 	}
 	defer rows.Close()
 
-	var requests []model.ApprovalRequest
+	var requests []*model.ApprovalRequest
 	for rows.Next() {
 		var req model.ApprovalRequest
 		err := rows.Scan(
@@ -163,7 +193,7 @@ func (r *AdminRepositoryImpl) GetAllApprovalRequests() ([]model.ApprovalRequest,
 			log.Printf("Error scanning approval request: %v", err)
 			return nil, err
 		}
-		requests = append(requests, req)
+		requests = append(requests, &req)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -176,7 +206,7 @@ func (r *AdminRepositoryImpl) GetAllApprovalRequests() ([]model.ApprovalRequest,
 }
 
 // Get Pending Approvals
-func (r *AdminRepositoryImpl) GetPendingApprovals() ([]model.ApprovalRequest, error) {
+func (r *AdminRepositoryImpl) GetPendingApprovals() ([]*model.ApprovalRequest, error) {
 	rows, err := r.db.Query(`SELECT * FROM get_pending_approvals()`)
 	if err != nil {
 		log.Printf("Error querying get_pending_approvals: %v", err)
@@ -184,7 +214,7 @@ func (r *AdminRepositoryImpl) GetPendingApprovals() ([]model.ApprovalRequest, er
 	}
 	defer rows.Close()
 
-	var pending []model.ApprovalRequest
+	var pending []*model.ApprovalRequest
 	for rows.Next() {
 		var req model.ApprovalRequest
 		err := rows.Scan(
@@ -198,7 +228,7 @@ func (r *AdminRepositoryImpl) GetPendingApprovals() ([]model.ApprovalRequest, er
 			log.Printf("Error scanning pending approval: %v", err)
 			return nil, err
 		}
-		pending = append(pending, req)
+		pending = append(pending, &req)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -257,97 +287,3 @@ func NewAdminRepository(db *sql.DB) repository.AdminRepository {
 	return &AdminRepositoryImpl{db: db}
 }
 
-// type AdminRepositoryImpl struct {
-// 	db *sql.DB
-// }
-
-// // Delete implements repository.AdminRepository.
-// func (r *AdminRepositoryImpl) Delete(AdminID uuid.UUID) error {
-// 	//Delete performs a soft delete of an admin
-// 	_, err := r.db.Exec(`Call Delete Admin($1)`, AdminID)
-// 	if err != nil {
-// 		log.Printf("error calling delete_admin for ID %v: %v", AdminID, err)
-// 		return err
-// 	}
-// 	log.Printf("admin soft_deleted: %v", AdminID)
-// 	return nil
-// }
-
-// // GetAll implements repository.AdminRepository.
-// func (r *AdminRepositoryImpl) GetAll() ([]*model.Admin, error) {
-// 	rows, err := r.db.Query(`SELECT * FROM get_all_admins()`)
-// 	if err != nil {
-// 		log.Printf("Error querying get_all_admins: %v", err)
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	var admins []*model.Admin
-// 	for rows.Next() {
-// 		var admin model.Admin
-// 		err := rows.Scan()
-// 		if err != nil {
-// 			log.Printf("Error scanning admin row: %v", err)
-// 			return nil, err
-// 		}
-// 		admins = append(admins, &admin)
-// 	}
-
-// 	if err = rows.Err(); err != nil {
-// 		log.Printf("Row iteration error: %v", err)
-// 		return nil, err
-// 	}
-
-// 	log.Printf("Admins retrieved: %d", len(admins))
-// 	return admins, nil
-// }
-
-// // GetByID implements repository.AdminRepository.
-// func (r *AdminRepositoryImpl) GetByID(AdminID uuid.UUID) (*model.Admin, error) {
-
-// 	var admin model.Admin
-
-// 	row := r.db.QueryRow(`SELECT * FROM get_admin_by_id($1)`, AdminID)
-// 	err := row.Scan()
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			log.Printf("Admin not found with ID: %v", AdminID)
-// 			return nil, fmt.Errorf("admin not found")
-// 		}
-// 		log.Printf("Error scanning admin by ID: %v", err)
-// 		return nil, err
-// 	}
-
-// 	log.Printf("Admin retrieved by ID: %+v", admin)
-// 	return &admin, nil
-// }
-
-// // Create inserts a new admin using the stored procedure
-// func (r AdminRepositoryImpl) Create(admin *model.Admin) error {
-// 	_, err := r.db.Exec(`CALL create_admin($1,$2, $3, $4, $5)`)
-// 	if err != nil {
-// 		log.Printf("Error calling create_admin: %v", err)
-// 		return err
-// 	}
-
-// 	log.Printf("Admin created: %+v", admin)
-// 	return nil
-
-// }
-
-// // Update modifies an existing admin using the stored procedure
-// func (r AdminRepositoryImpl) Update(admin *model.Admin) error {
-// 	_, err := r.db.Exec(`call update admin($1, $2, $3, $4, $5, $6)`)
-// 	if err != nil {
-// 		log.Printf("Error calling update_admin: %v", err)
-// 		return err
-// 	}
-
-// 	log.Printf("Admin updated: %+v", admin)
-// 	return nil
-// }
-
-// // Constructor
-// func NewAdminRepository(db *sql.DB) repository.AdminRepository {
-// 	return &AdminRepositoryImpl{db: db}
-// }

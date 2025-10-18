@@ -47,7 +47,7 @@ func (r *OrganizationRepositoryImpl) Delete(OrganizationID uuid.UUID) error {
 
 // GetAll implements repository.OrganizationgRepository.
 func (r *OrganizationRepositoryImpl) GetAll() ([]*model.Organization, error) {
-	query :=  `SELECT * FROM  get_all_orgs()`
+	query :=  `SELECT * FROM  get_all_org()`
 	rows, err := r.db.Query(query)
     if err != nil {
         return nil, err
@@ -59,10 +59,10 @@ func (r *OrganizationRepositoryImpl) GetAll() ([]*model.Organization, error) {
         var o model.Organization
         err := rows.Scan(
             &o.ID,
-						&o.Name,
-						&o.Description,
-						&o.OwnerID,
-						pq.Array(&o.Tutors),
+			&o.Name,
+			&o.Description,
+			&o.OwnerID,
+			pq.Array(&o.Tutors),
             &o.CreatedAt,
             &o.UpdatedAt,
             &o.DeletedAt,
@@ -110,10 +110,10 @@ func (r *OrganizationRepositoryImpl) GetByID(OrganizationID uuid.UUID) (*model.O
 
 // Update implements repository.OrganizationgRepository.
 func (r *OrganizationRepositoryImpl) Update(Organization *model.Organization) error {
-	_, err := r.db.Exec(`CALL update_or($1, $2, $3)`,
+	_, err := r.db.Exec(`CALL update_org($1, $2, $3)`,
 		Organization.ID,
 		Organization.Name,
-		Organization.Description)
+		Organization.Description,)
 	if err != nil {
 		log.Printf("error calling update orgs")
 		return err

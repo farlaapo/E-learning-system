@@ -20,6 +20,7 @@ type ManagedEntity struct {
 	Type      string    `json:"type"` // user, organization, course
 	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // Tutor/Organization approval requests
@@ -38,6 +39,6 @@ type SystemSettings struct {
 	ID             uuid.UUID `json:"id"`
 	PaymentGateway string    `json:"payment_gateway"`
 	Theme          string    `json:"theme"`
-	//EmailTemplateID string    `json:"email_template_id"`
+	// EmailTemplateID string    `json:"email_template_id"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

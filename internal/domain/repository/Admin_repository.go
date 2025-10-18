@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"E-Learning-System/internal/domain/model"
+	"e-learning-system/internal/domain/model"
 
 	"github.com/gofrs/uuid"
 )
@@ -22,14 +22,14 @@ type AdminRepository interface {
 	// 2 Managed Entities
 	CreateManagedEntity(entity *model.ManagedEntity) error
 	UpdateManagedEntity(entity *model.ManagedEntity) error
-	DeleteManagedEntity(id uuid.UUID) error
-	GetAllManagedEntities() ([]model.ManagedEntity, error)
+	DeleteManagedEntity(entityID uuid.UUID) error
+	GetAllManagedEntities() ([]*model.ManagedEntity, error)
 
 	// 3 Approval Requests
 	CreateApprovalRequest(req *model.ApprovalRequest) error
 	UpdateApprovalStatus(id uuid.UUID, status string, reviewedBy uuid.UUID) error
-	GetPendingApprovals() ([]model.ApprovalRequest, error)
-	GetAllApprovalRequests() ([]model.ApprovalRequest, error)
+	GetPendingApprovals() ([]*model.ApprovalRequest, error)
+	GetAllApprovalRequests() ([]*model.ApprovalRequest, error)
 
 	// 4 System Settings
 	UpsertSystemSettings(setting *model.SystemSettings) error

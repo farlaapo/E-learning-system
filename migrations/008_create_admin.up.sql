@@ -10,14 +10,16 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approval_status_enum') THEN
         CREATE TYPE approval_status_enum AS ENUM ('pending', 'approved', 'rejected');
     END IF;
-END
+END;
 $$;
 
 
 -- ===========================================
--- 1 ADMIN DASHBOARD
+-- 1. ADMIN DASHBOARD SUMMARY
 -- ===========================================
--- Summary view for key platform metrics
+-- ===========================================
+-- 1. ADMIN DASHBOARD SUMMARY
+-- ===========================================
 CREATE OR REPLACE FUNCTION get_admin_dashboard_summary()
 RETURNS TABLE (
     total_users BIGINT,
@@ -29,18 +31,22 @@ LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL) AS total_users,
-        (SELECT COUNT(*) FROM courses WHERE deleted_at IS NULL) AS total_courses,
-        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'completed') AS total_revenue,
-        (SELECT COUNT(*) FROM courses WHERE status = 'published') AS active_courses;
+        (SELECT COUNT(u.id)::BIGINT FROM users u) AS total_users,
+        (SELECT COUNT(c.id)::BIGINT FROM courses c) AS total_courses,
+        (SELECT COALESCE(SUM(p.amount), 0)::NUMERIC FROM payments p WHERE p.status = 'SUCCESS') AS total_revenue,
+        0::BIGINT AS active_courses;
 END;
 $$;
 
 
+
+
+
+
+
 -- ===========================================
--- 2 MANAGED ENTITIES
+-- 2. MANAGED ENTITIES
 -- ===========================================
--- Entities managed by admin (users, organizations, courses)
 CREATE TABLE IF NOT EXISTS managed_entities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -98,17 +104,20 @@ RETURNS TABLE (
 LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, name, type, status, created_at
-    FROM managed_entities
-    ORDER BY created_at DESC;
+    SELECT 
+        m.id,
+        m.name,
+        m.type, 
+        m.status, 
+        m.created_at
+    FROM managed_entities m;
 END;
 $$;
 
 
 -- ===========================================
--- 3 APPROVAL REQUESTS
+-- 3. APPROVAL REQUESTS
 -- ===========================================
--- Tutor or Organization approval management
 CREATE TABLE IF NOT EXISTS approval_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     entity_type entity_type_enum NOT NULL,
@@ -127,8 +136,8 @@ CREATE OR REPLACE PROCEDURE create_approval_request(
 )
 LANGUAGE plpgsql AS $$
 BEGIN
-    INSERT INTO approval_requests (id, entity_type, entity_id, status)
-    VALUES (p_id, p_entity_type, p_entity_id, 'pending');
+    INSERT INTO approval_requests (id, entity_type, entity_id)
+    VALUES (p_id, p_entity_type, p_entity_id);
 END;
 $$;
 
@@ -160,10 +169,14 @@ RETURNS TABLE (
 LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, entity_type, entity_id, request_date, status
-    FROM approval_requests
-    WHERE status = 'pending'
-    ORDER BY request_date DESC;
+    SELECT 
+        p.id, 
+        p.entity_type, 
+        p.entity_id, 
+        p.request_date, 
+        p.status
+    FROM approval_requests p
+    WHERE p.status = 'pending';
 END;
 $$;
 
@@ -181,22 +194,26 @@ RETURNS TABLE (
 LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, entity_type, entity_id, request_date, status, reviewed_by, reviewed_at
-    FROM approval_requests
-    ORDER BY request_date DESC;
+    SELECT 
+        a.id,
+        a.entity_type,
+        a.entity_id, 
+        a.request_date, 
+        a.status, 
+        a.reviewed_by, 
+        a.reviewed_at
+    FROM approval_requests a;
 END;
 $$;
 
 
 -- ===========================================
---  4 SYSTEM SETTINGS
+-- 4. SYSTEM SETTINGS
 -- ===========================================
--- Global configuration for system-wide settings
 CREATE TABLE IF NOT EXISTS system_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     payment_gateway VARCHAR(100),
     theme VARCHAR(100),
-   -- email_template_id VARCHAR(100),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -204,8 +221,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
 CREATE OR REPLACE PROCEDURE upsert_system_settings(
     IN p_id UUID,
     IN p_payment_gateway VARCHAR,
-    IN p_theme VARCHAR,
-  --  IN p_email_template_id VARCHAR
+    IN p_theme VARCHAR
 )
 LANGUAGE plpgsql AS $$
 BEGIN
@@ -213,12 +229,11 @@ BEGIN
         UPDATE system_settings
         SET payment_gateway = p_payment_gateway,
             theme = p_theme,
-           -- email_template_id = p_email_template_id,
             updated_at = NOW()
         WHERE id = p_id;
     ELSE
-        INSERT INTO system_settings (id, payment_gateway, theme, email_template_id)
-        VALUES (p_id, p_payment_gateway, p_theme, /*p_email_template_id*/ NULL);
+        INSERT INTO system_settings (id, payment_gateway, theme)
+        VALUES (p_id, p_payment_gateway, p_theme);
     END IF;
 END;
 $$;
@@ -229,15 +244,18 @@ RETURNS TABLE (
     id UUID,
     payment_gateway VARCHAR,
     theme VARCHAR,
-   -- email_template_id VARCHAR,
     updated_at TIMESTAMP
 )
 LANGUAGE plpgsql AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, payment_gateway, theme, updated_at
-    FROM system_settings
-    ORDER BY updated_at DESC
+    SELECT 
+        l.id, 
+        l.payment_gateway, 
+        l.theme, 
+        l.updated_at
+    FROM system_settings l
+    ORDER BY l.updated_at DESC
     LIMIT 1;
 END;
 $$;

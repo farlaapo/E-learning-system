@@ -80,6 +80,7 @@ func main() {
 	lessonRepo := gateway.NewLessonRepository(dbConn)
 	orgRepo := gateway.NewOrganizationRepository(dbConn)
 	paymentRepo := gateway.NewPaymentRepository(dbConn)
+	adminRepo := gateway.NewAdminRepository(dbConn)
 
 
 
@@ -91,6 +92,7 @@ func main() {
 	lessonService := service.NewlessonService(lessonRepo, tokenRepo)
 	orgService := service.NewOrganizationService(orgRepo, tokenRepo)
 	paymentService := service.NewpaymentService(paymentRepo, tokenRepo)
+	adminService :=    service.NewAdminService(adminRepo, tokenRepo)
 
 
 	// Initialize Controllers
@@ -101,6 +103,7 @@ func main() {
 	lessonController := controller.NewLessonController(lessonService)
 	orgController := controller.NeworgsController(orgService)
 	paymentController := controller.NewPaymentController(paymentService)
+	adminController := controller.NewAdminController(adminService)
 
 
 	// Setup Gin HTTP Server
@@ -121,6 +124,7 @@ func main() {
 	routes.RegisterLessonRoutes(r, *lessonController, tokenRepo)
 	routes.RegisterOrganizationRoutes(r, *orgController, tokenRepo)
 	routes.RegisterpaymentRoutes(r, *paymentController, tokenRepo)
+	routes.RegisterAdminRoutes(r, adminController, tokenRepo)
 
 
 	// Start Gin server (blocks here, keeps container alive)

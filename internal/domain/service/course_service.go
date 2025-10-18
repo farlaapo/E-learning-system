@@ -63,7 +63,8 @@ func (s *courseService) DeleteCourse(courseID uuid.UUID) error {
 	}
 
 	if err := s.repo.Delete(courseID); err != nil {
-		return fmt.Errorf("failed to delete course With ID %s:", courseID)
+		log.Printf("failed to delete course With ID %v :", err)
+		return  err
 	}
 
 	log.Printf("successfully deleted course with ID %s", courseID)

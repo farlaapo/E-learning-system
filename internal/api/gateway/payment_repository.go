@@ -17,38 +17,55 @@ type PaymentRepository struct {
 
 // Create implements repository.PaymnetRepository.
 func (r *PaymentRepository) Create(payment *model.Payment) error {
-	_, err := r.db.Exec(`SELECT create_payment($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 $12, $13, $14, $15, $16 $17)`,
-	payment.ID ,    
-	payment.UserID ,        
-	payment.Role  ,       
-	payment.Amount  ,       
-	payment.Currency ,     
-	payment.Method ,      
-	payment.Type  ,    
-	payment.Status  ,    
-	payment.TransactionRef, 
-	payment.Description ,
-	payment.PlanName , 
-	payment.StartDate ,  
-	payment.EndDate ,
-	payment.RenewalDate  , 
-	payment.CancelledAt ,   
-	payment.ProviderRef  , 
-	payment.IsRecurring ,
-	)  
-	if err != nil {
+  // validate
+		validStatuses := map[string]bool{
+    "PENDING": true,
+    "SUCCESS": true,
+    "FAILED": true,
+    "REFUNDED": true,
+  }
+
+  if !validStatuses[payment.Status] {
+    return fmt.Errorf("invalid payment status: %s", payment.Status)
+  }
+
+if !validStatuses[payment.Status] {
+    return fmt.Errorf("invalid payment status: %s", payment.Status)
+}
+
+
+    _, err := r.db.Exec(`CALL create_payment($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        payment.ID,
+        payment.UserID,
+        payment.Role,
+        payment.Amount,
+        payment.Currency,
+        payment.Method,
+        payment.Type,
+        payment.Status,
+        payment.TransactionRef,
+        payment.Description,
+        payment.PlanName,
+        payment.StartDate,
+        payment.EndDate,
+        payment.RenewalDate,
+        payment.CancelledAt,
+        payment.ProviderRef,
+        payment.IsRecurring,
+    )
+    if err != nil {
         log.Printf("Error calling create_payment: %v", err)
         return err
     }
 
     log.Printf("payment created %+v", payment)
     return nil
-
 }
+
 
 // Delete implements repository.PaymnetRepository.
 func (r *PaymentRepository) Delete(paymentID uuid.UUID) error {
-	 _, err := r.db.Exec(`SELECT Delete_payment($1)`,  paymentID)
+	 _, err := r.db.Exec(`CALL delete_payment($1)`,  paymentID)
 	 if err != nil {
 		log.Printf("Error calling Delete_payment for ID %v, %v", err, paymentID)
 		return err
@@ -60,7 +77,7 @@ func (r *PaymentRepository) Delete(paymentID uuid.UUID) error {
 
 // GetAll implements repository.PaymnetRepository.
 func (r *PaymentRepository) GetAll() ([]*model.Payment, error) {
-	query  := `SELECT * FROM get_all_payment()`
+	query  := `SELECT * FROM get_all_payments()`
 	row, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -90,6 +107,7 @@ func (r *PaymentRepository) GetAll() ([]*model.Payment, error) {
 	    &payment.IsRecurring ,
 		  &payment.CreatedAt,
 		  &payment.UpdatedAt,
+			&payment.DeletedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -102,7 +120,7 @@ func (r *PaymentRepository) GetAll() ([]*model.Payment, error) {
 
 // GetByID implements repository.PaymnetRepository.
 func (r *PaymentRepository) GetByID(paymentID uuid.UUID) (*model.Payment, error) {
-	query := `SELECT * FROM  get_payment_id($1)`
+	query := `SELECT * FROM  get_payment_by_id($1)`
 	row  := r.db.QueryRow(query, paymentID)
 
 	var payment  model.Payment
@@ -126,6 +144,7 @@ func (r *PaymentRepository) GetByID(paymentID uuid.UUID) (*model.Payment, error)
 	    &payment.IsRecurring ,
 		  &payment.CreatedAt,
 		  &payment.UpdatedAt,
+			&payment.DeletedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -141,24 +160,28 @@ func (r *PaymentRepository) GetByID(paymentID uuid.UUID) (*model.Payment, error)
 
 // Update implements repository.PaymnetRepository.
 func (r *PaymentRepository) Update(payment *model.Payment) error {
-	_, err := r.db.Exec(`SELECT update_payment(1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 $12, $13, $14, $15, $16) `,
-	   payment.ID ,
-	   payment.Role  ,       
-	   payment.Amount  ,       
-	   payment.Currency ,     
-	   payment.Method ,      
-	   payment.Type  ,    
-	   payment.Status  ,    
-	   payment.TransactionRef, 
-	   payment.Description ,
-	   payment.PlanName , 
-  	 payment.StartDate ,  
-	   payment.EndDate ,
-	   payment.RenewalDate  , 
-	   payment.CancelledAt ,   
-	   payment.ProviderRef  , 
-	   payment.IsRecurring ,
-  )
+_, err := r.db.Exec(`
+    CALL update_payment(
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, 
+        $10, $11, $12, $13, $14, $15, $16
+    )`,
+    payment.ID,
+    payment.Role,
+    payment.Amount,
+    payment.Currency,
+    payment.Method,
+    payment.Type,
+    payment.Status,
+    payment.TransactionRef,
+    payment.Description,
+    payment.PlanName,
+    payment.StartDate,
+    payment.EndDate,
+    payment.RenewalDate,
+    payment.CancelledAt,
+    payment.ProviderRef,
+    payment.IsRecurring,
+)
 	if err != nil {
         log.Printf("Error calling create_payment: %v", err)
         return err

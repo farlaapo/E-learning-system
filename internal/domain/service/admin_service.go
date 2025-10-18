@@ -1,8 +1,8 @@
 package service
 
 import (
-	"E-Learning-System/internal/domain/model"
-	"E-Learning-System/internal/domain/repository"
+	"e-learning-system/internal/domain/model"
+	"e-learning-system/internal/domain/repository"
 	"fmt"
 	"log"
 	"time"
@@ -21,13 +21,13 @@ type AdminService interface {
 	CreateManagedEntity(name, entityType, status string) (*model.ManagedEntity, error)
 	UpdateManagedEntity(entity *model.ManagedEntity) error
 	DeleteManagedEntity(id uuid.UUID) error
-	ListAllManagedEntities() ([]model.ManagedEntity, error)
+	ListAllManagedEntities() ([]*model.ManagedEntity, error)
 
 	// 3 Approval Requests
 	CreateApprovalRequest(entityType string, entityID uuid.UUID) (*model.ApprovalRequest, error)
 	UpdateApprovalStatus(id uuid.UUID, status string, reviewedBy uuid.UUID) error
-	ListAllApprovalRequests() ([]model.ApprovalRequest, error)
-	ListPendingApprovals() ([]model.ApprovalRequest, error)
+	ListAllApprovalRequests() ([]*model.ApprovalRequest, error)
+	ListPendingApprovals() ([]*model.ApprovalRequest, error)
 
 	// 4 System Settings
 	UpsertSystemSettings(paymentGateway, theme string) (*model.SystemSettings, error)
@@ -69,6 +69,7 @@ func (s *adminService) CreateManagedEntity(name, entityType, status string) (*mo
 		Type:      entityType,
 		Status:    status,
 		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	log.Printf("Creating managed entity: %+v", entity)
@@ -93,15 +94,16 @@ func (s *adminService) UpdateManagedEntity(entity *model.ManagedEntity) error {
 	return nil
 }
 
-func (s *adminService) DeleteManagedEntity(id uuid.UUID) error {
-	if err := s.repo.DeleteManagedEntity(id); err != nil {
-		return fmt.Errorf("failed to delete managed entity with ID %s: %v", id, err)
+func (s *adminService) DeleteManagedEntity(entityID uuid.UUID) error {
+	
+	if err := s.repo.DeleteManagedEntity(entityID); err != nil {
+		return fmt.Errorf("failed to delete managed entity with ID %s: %v", entityID, err)
 	}
-	log.Printf("Managed entity deleted successfully with ID %s", id)
+	log.Printf("Managed entity deleted successfully with ID %s", entityID)
 	return nil
 }
 
-func (s *adminService) ListAllManagedEntities() ([]model.ManagedEntity, error) {
+func (s *adminService) ListAllManagedEntities() ([]*model.ManagedEntity, error) {
 	entities, err := s.repo.GetAllManagedEntities()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list managed entities: %v", err)
@@ -124,6 +126,7 @@ func (s *adminService) CreateApprovalRequest(entityType string, entityID uuid.UU
 		EntityID:    entityID,
 		RequestDate: time.Now(),
 		Status:      "pending",
+		
 	}
 
 	log.Printf("Creating approval request: %+v", req)
@@ -143,7 +146,7 @@ func (s *adminService) UpdateApprovalStatus(id uuid.UUID, status string, reviewe
 	return nil
 }
 
-func (s *adminService) ListAllApprovalRequests() ([]model.ApprovalRequest, error) {
+func (s *adminService) ListAllApprovalRequests() ([]*model.ApprovalRequest, error) {
 	requests, err := s.repo.GetAllApprovalRequests()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list approval requests: %v", err)
@@ -151,7 +154,7 @@ func (s *adminService) ListAllApprovalRequests() ([]model.ApprovalRequest, error
 	return requests, nil
 }
 
-func (s *adminService) ListPendingApprovals() ([]model.ApprovalRequest, error) {
+func (s *adminService) ListPendingApprovals() ([]*model.ApprovalRequest, error) {
 	pending, err := s.repo.GetPendingApprovals()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pending approvals: %v", err)

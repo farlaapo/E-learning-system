@@ -13,7 +13,7 @@ type PaymentController struct {
 }
 
 // CreatePayment implements service.PaymentService.
-func (pC *PaymentController) CreatePayment(c * gin.Context) {
+func (pC *PaymentController) CreatePayment(c *gin.Context) {
 	var Payment model.Payment 
 
 	if err := c.BindJSON(&Payment); err != nil {
@@ -21,7 +21,17 @@ func (pC *PaymentController) CreatePayment(c * gin.Context) {
 		return
 	}
 	
-	createdPayment, err := pC.PaymentService.CreatePayment(Payment.UserID, Payment.Role, Payment.Amount, Payment.Currency, Payment.Method, Payment.Type)
+	createdPayment, err := pC.PaymentService.CreatePayment(Payment.UserID, Payment.Role, Payment.Amount, Payment.Currency, Payment.Method, Payment.Type,
+	   Payment.Status,
+    Payment.TransactionRef,
+    Payment.Description,
+    Payment.PlanName,
+    Payment.StartDate,
+    Payment.EndDate,
+    Payment.RenewalDate,
+    Payment.CancelledAt,
+    Payment.ProviderRef,
+    Payment.IsRecurring,)
 	if err != nil {
 		c.JSON(500, gin.H{"message": err.Error()})
 		return
@@ -31,7 +41,7 @@ func (pC *PaymentController) CreatePayment(c * gin.Context) {
 }
 
 // DeletPayment implements service.PaymentService.
-func (pC *PaymentController) DeletPayment(c * gin.Context) {
+func (pC *PaymentController) DeletPayment(c *gin.Context) {
 		// param
 	paymentParam := c.Param("id")
 	paymentID, err := uuid.FromString(paymentParam)
@@ -52,7 +62,7 @@ func (pC *PaymentController) DeletPayment(c * gin.Context) {
 }
 
 // GetAllPayment implements service.PaymentService.
-func (pC *PaymentController) GetAllPayment(c * gin.Context)  {
+func (pC *PaymentController) GetAllPayment(c *gin.Context)  {
 	payment, err := pC.PaymentService.GetAllPayment()
 	if err != nil {
 		c.JSON(500, gin.H{"message": err.Error()})
@@ -63,7 +73,7 @@ func (pC *PaymentController) GetAllPayment(c * gin.Context)  {
 }
 
 // GetPaymentById implements service.PaymentService.
-func (pC *PaymentController) GetPaymentById(c * gin.Context) {
+func (pC *PaymentController) GetPaymentById(c *gin.Context) {
 	// param
 	paymentParam := c.Param("id")
 	paymentID, err := uuid.FromString(paymentParam)
@@ -83,7 +93,7 @@ func (pC *PaymentController) GetPaymentById(c * gin.Context) {
 }
 
 // UpdatePayment implements service.PaymentService.
-func (pC *PaymentController) UpdatePayment(c * gin.Context) {
+func (pC *PaymentController) UpdatePayment(c *gin.Context) {
 	var payment model.Payment
 	// param
 	paymentParam := c.Param("id")
@@ -93,7 +103,7 @@ func (pC *PaymentController) UpdatePayment(c * gin.Context) {
 		return
 	}
   // bind with json
-	if err := c.BindJSON(&paymentID); err != nil {
+	if err := c.BindJSON(&payment); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
